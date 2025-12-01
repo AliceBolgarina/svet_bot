@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Выбор пункта выдачи - Рассеянный свет</title>
+    <script async src="https://ndd-widget.landpro.site/widget.js"></script>
+    <style>
+        /* Стили без изменений */
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🗺️ Выберите пункт выдачи (РЕЖИМ ТЕСТИРОВАНИЯ)</h1>
+            <p>Используется тестовая станция Яндекс.Доставки</p>
+        </div>
+        
+        <div class="instruction">
+            <strong>ВНИМАНИЕ: Режим тестирования</strong>
+            <p>Используется тестовая станция отгрузки Яндекс.</p>
+            <p>После настройки магазина в Яндекс.Доставке замените ID станции на ваш.</p>
+        </div>
+        
+        <div class="widget-container">
+            <div class="loading" id="loadingWidget">
+                Загружаем тестовую карту пунктов выдачи...
+            </div>
+            <div id="delivery-widget" style="display: none;"></div>
+        </div>
+    </div>
+    
+    <script>
+        // Инициализация виджета с ТЕСТОВЫМ ID
+        (function(w) {
+            function startWidget() {
+                document.getElementById('loadingWidget').style.display = 'none';
+                document.getElementById('delivery-widget').style.display = 'block';
+                
+                // ТЕСТОВЫЙ ID СТАНЦИИ ОТГРУЗКИ
+                const TEST_STATION_ID = "05e809bb-4521-42d9-a936-0fb0744c0fb3";
+                
+                w.YaDelivery.createWidget({
+                    containerId: 'delivery-widget',
+                    params: {
+                        city: "Москва",
+                        size: {
+                            "height": "500px",
+                            "width": "100%"
+                        },
+                        source_platform_station: TEST_STATION_ID, // Тестовый ID
+                        physical_dims_weight_gross: 2000,
+                        delivery_price: "300 руб. (тест)", 
+                        delivery_term: "2-4 дня (тест)",
+                        show_select_button: true,
+                        filter: {
+                            type: ["pickup_point", "terminal"],
+                            is_yandex_branded: false,
+                            payment_methods: ["already_paid", "card_on_receipt"],
+                            payment_methods_filter: "or"
+                        }
+                    },
+                });
+            }
+            
+            w.YaDelivery
+                ? startWidget()
+                : document.addEventListener('YaNddWidgetLoad', startWidget);
+        })(window);
+        
+        // Обработка выбора ПВЗ (остальной код без изменений)
+        let selectedPVZ = null;
+        
+        document.addEventListener('YaNddWidgetPointSelected', function (data) {
+            selectedPVZ = data.detail;
+            console.log('Тестовый ПВЗ выбран:', selectedPVZ);
+            
+            // Показываем кнопку подтверждения
+            const confirmBtn = document.createElement('button');
+            confirmBtn.id = 'confirmBtn';
+            confirmBtn.className = 'confirm-btn show';
+            confirmBtn.innerHTML = '✅ Тест: Отправить данные ПВЗ';
+            confirmBtn.onclick = sendTestData;
+            
+            document.querySelector('.container').appendChild(confirmBtn);
+            
+            // Показываем информацию о выбранном ПВЗ
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'selected-info show';
+            infoDiv.innerHTML = `
+                <div class="pvz-name">📍 ${selectedPVZ.name || 'Не указано'}</div>
+                <div class="pvz-address">🏠 ${selectedPVZ.address.full_address}</div>
+                <div>🆔 ID: ${selectedPVZ.id}</div>
+            `;
+            
+            document.querySelector('.container').appendChild(infoDiv);
+        });
+        
+        function sendTestData() {
+            if (!selectedPVZ) return;
+            
+            const pvzData = {
+                action: 'pvz_selected',
+                pvz_id: selectedPVZ.id,
+                pvz_name: selectedPVZ.name,
+                pvz_address: selectedPVZ.address.full_address,
+                pvz_city: selectedPVZ.address.locality || '',
+                pvz_street: selectedPVZ.address.street || '',
+                pvz_house: selectedPVZ.address.house || '',
+                pvz_working_hours: selectedPVZ.working_hours || '',
+                pvz_phone: selectedPVZ.phone || '',
+                pvz_type: selectedPVZ.type || 'pickup_point',
+                test_mode: true // Флаг тестового режима
+            };
+            
+            console.log('Тестовые данные ПВЗ:', pvzData);
+            
+            // Если в Telegram Web App - отправляем данные
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.sendData(JSON.stringify(pvzData));
+                alert('Данные отправлены в Telegram! Закройте окно.');
+            } else {
+                // Для тестирования в браузере
+                alert('Тестовые данные:\n' + JSON.stringify(pvzData, null, 2));
+                console.log('Скопируйте эти данные для тестирования:', pvzData);
+            }
+        }
+        
+        // Для тестирования в браузере добавляем кнопку
+        if (!window.Telegram) {
+            document.addEventListener('DOMContentLoaded', function() {
+                const testBtn = document.createElement('button');
+                testBtn.innerHTML = '🔄 Тест: Имитировать выбор ПВЗ';
+                testBtn.style.cssText = `
+                    background: #ff9800;
+                    color: white;
+                    border: none;
+                    padding: 12px 24px;
+                    border-radius: 8px;
+                    margin: 20px auto;
+                    display: block;
+                    cursor: pointer;
+                `;
+                testBtn.onclick = function() {
+                    // Имитируем выбор тестового ПВЗ
+                    const mockEvent = new CustomEvent('YaNddWidgetPointSelected', {
+                        detail: {
+                            id: 'test_pvz_123',
+                            name: 'Тестовый пункт выдачи',
+                            type: 'pickup_point',
+                            address: {
+                                full_address: 'Москва, ул. Тестовая, д. 1',
+                                locality: 'Москва',
+                                street: 'ул. Тестовая',
+                                house: 'д. 1'
+                            },
+                            working_hours: '09:00-21:00',
+                            phone: '+7 (999) 123-45-67'
+                        }
+                    });
+                    document.dispatchEvent(mockEvent);
+                };
+                
+                document.querySelector('.container').appendChild(testBtn);
+            });
+        }
+    </script>
+</body>
+</html>
