@@ -3,134 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="format-detection" content="telephone=no">
-    <meta name="mobile-web-app-capable" content="yes">
-    <title>Выбор ПВЗ</title>
+    <title>Выбор ПВЗ - Рассеянный свет</title>
+    <!-- Яндекс виджет -->
+    <script async src="https://ndd-widget.landpro.site/widget.js"></script>
     <style>
-        /* Сброс стилей для Telegram Web App */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #ffffff;
-            height: 100vh;
-            overflow-x: hidden;
-            padding: 0;
-            margin: 0;
-        }
-        
-        .container {
-            padding: 16px;
-            max-width: 100%;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 16px;
-            margin-bottom: 16px;
-            text-align: center;
-        }
-        
-        .header h1 {
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-        
-        .header p {
-            font-size: 14px;
-            opacity: 0.9;
-        }
-        
-        .instruction {
-            background: #f8f9fa;
-            padding: 16px;
-            border-radius: 12px;
-            margin-bottom: 16px;
-            font-size: 14px;
-            line-height: 1.4;
-        }
-        
-        .pvz-options {
-            flex-grow: 1;
-            margin-bottom: 16px;
-        }
-        
-        .pvz-option {
-            background: white;
-            border: 2px solid #e9ecef;
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-        }
-        
-        .pvz-option:active {
-            transform: scale(0.98);
-            border-color: #667eea;
-            background: #f8f9ff;
-        }
-        
-        .pvz-option.selected {
-            border-color: #4CAF50;
-            background: #e8f5e9;
-        }
-        
-        .pvz-icon {
-            width: 40px;
-            height: 40px;
-            background: #667eea;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 12px;
-            flex-shrink: 0;
-        }
-        
-        .pvz-icon svg {
-            width: 24px;
-            height: 24px;
-            fill: white;
-        }
-        
-        .pvz-info {
-            flex-grow: 1;
-        }
-        
-        .pvz-name {
-            font-weight: 600;
-            font-size: 16px;
-            color: #333;
-            margin-bottom: 4px;
-        }
-        
-        .pvz-address {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 4px;
-        }
-        
-        .pvz-hours {
-            font-size: 13px;
-            color: #888;
-        }
-        
-        .button {
-            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+        /* Стили как в предыдущем варианте, но добавим */
+        .yandex-widget-btn {
+            background: linear-gradient(135deg, #FF0000 0%, #CC0000 100%);
             color: white;
             border: none;
             border-radius: 12px;
@@ -139,85 +18,20 @@
             font-weight: 600;
             cursor: pointer;
             width: 100%;
-            transition: all 0.2s;
-            margin-top: 8px;
+            margin: 10px 0;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 10px;
         }
         
-        .button:active {
-            transform: scale(0.98);
-            opacity: 0.9;
-        }
-        
-        .button:disabled {
-            background: #cccccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        .button.secondary {
-            background: #6c757d;
-            margin-top: 8px;
-        }
-        
-        .status {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            border-radius: 8px;
-            padding: 12px;
-            margin-top: 12px;
-            font-size: 14px;
-            color: #856404;
+        .widget-container {
             display: none;
-        }
-        
-        .status.success {
-            background: #d4edda;
-            border-color: #c3e6cb;
-            color: #155724;
-        }
-        
-        .status.error {
-            background: #f8d7da;
-            border-color: #f5c6cb;
-            color: #721c24;
-        }
-        
-        /* Для очень маленьких экранов */
-        @media (max-width: 360px) {
-            .container {
-                padding: 12px;
-            }
-            
-            .header {
-                padding: 16px;
-            }
-            
-            .header h1 {
-                font-size: 18px;
-            }
-            
-            .pvz-option {
-                padding: 12px;
-            }
-            
-            .button {
-                padding: 16px;
-                font-size: 15px;
-            }
-        }
-        
-        /* Для Telegram Web App */
-        .telegram-only {
-            display: none;
-        }
-        
-        /* Скрыть scrollbar в Telegram */
-        ::-webkit-scrollbar {
-            display: none;
+            margin: 20px 0;
+            height: 400px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid #e9ecef;
         }
     </style>
 </head>
@@ -225,118 +39,173 @@
     <div class="container">
         <div class="header">
             <h1>🗺️ Выбор пункта выдачи</h1>
-            <p>Выберите удобный пункт выдачи Яндекс.Доставки</p>
+            <p>Яндекс.Доставка • Бесплатно от 3000₽</p>
         </div>
         
-        <div class="instruction">
-            💡 <strong>Как выбрать:</strong> Нажмите на удобный пункт выдачи ниже, затем подтвердите выбор.
-        </div>
-        
-        <div class="pvz-options" id="pvzOptions">
-            <!-- ПВЗ будут добавлены через JavaScript -->
-        </div>
-        
-        <button class="button" id="confirmButton" disabled>
-            <span>✅ Подтвердить выбор</span>
+        <!-- Вариант 1: Яндекс карта -->
+        <button class="yandex-widget-btn" id="yandexBtn">
+            <span>🔍 Открыть Яндекс карту</span>
         </button>
         
-        <button class="button secondary" id="testButton">
-            <span>🔄 Тест без выбора</span>
+        <div class="widget-container" id="yandexWidget">
+            <div id="delivery-widget" style="height: 100%;"></div>
+        </div>
+        
+        <!-- Или -->
+        <div class="instruction" style="text-align: center; margin: 20px 0;">
+            <strong>–– ИЛИ ––</strong><br>
+            <span style="color: #666; font-size: 14px;">Выберите из популярных:</span>
+        </div>
+        
+        <!-- Вариант 2: Список ПВЗ -->
+        <div class="pvz-options" id="pvzOptions">
+            <!-- Список ПВЗ будет здесь -->
+        </div>
+        
+        <!-- Кнопки действий -->
+        <button class="button" id="confirmButton" disabled>
+            <span>✅ Подтвердить выбор</span>
         </button>
         
         <div class="status" id="statusMessage"></div>
     </div>
     
     <script>
-        // Данные ПВЗ для тестирования
+        // Данные ПВЗ (можно расширить)
         const pvzList = [
             {
-                id: 'pvz_msk_1',
+                id: 'pvz_msk_tverskaya',
                 name: 'Пункт выдачи на Тверской',
                 address: 'Москва, ул. Тверская, д. 10',
                 hours: '09:00-21:00 ежедневно',
                 phone: '+7 (495) 111-22-33',
-                coordinates: { lat: 55.7610, lng: 37.6085 }
+                yandex_id: 'optional_id_1'
             },
             {
-                id: 'pvz_msk_2',
-                name: 'Пункт выдачи на Арбате',
+                id: 'pvz_msk_arbat',
+                name: 'Пункт выдачи на Арбате', 
                 address: 'Москва, ул. Арбат, д. 25',
                 hours: '10:00-22:00 ежедневно',
                 phone: '+7 (495) 222-33-44',
-                coordinates: { lat: 55.7490, lng: 37.5915 }
+                yandex_id: 'optional_id_2'
             },
             {
-                id: 'pvz_spb_1',
+                id: 'pvz_spb_nevsky',
                 name: 'Пункт выдачи на Невском',
                 address: 'Санкт-Петербург, Невский пр., д. 50',
                 hours: '08:00-20:00 ежедневно',
                 phone: '+7 (812) 333-44-55',
-                coordinates: { lat: 59.9343, lng: 30.3351 }
-            },
-            {
-                id: 'pvz_msk_3',
-                name: 'Пункт выдачи в ТЦ Афимолл',
-                address: 'Москва, Пресненская наб., д. 2',
-                hours: '10:00-23:00 ежедневно',
-                phone: '+7 (495) 444-55-66',
-                coordinates: { lat: 55.7490, lng: 37.5405 }
+                yandex_id: 'optional_id_3'
             }
         ];
         
         // Глобальные переменные
         let selectedPVZ = null;
         let isTelegram = false;
+        let yandexWidgetInitialized = false;
         
         // Инициализация
         document.addEventListener('DOMContentLoaded', function() {
-            // Проверяем запущено ли в Telegram
+            // Проверяем Telegram Web App
             if (window.Telegram && window.Telegram.WebApp) {
                 isTelegram = true;
                 initTelegramWebApp();
-            } else {
-                // Для тестирования в браузере
-                initBrowserMode();
             }
             
             // Загружаем список ПВЗ
             loadPVZOptions();
             
-            // Назначаем обработчики кнопок
+            // Назначаем обработчики
+            document.getElementById('yandexBtn').addEventListener('click', toggleYandexWidget);
             document.getElementById('confirmButton').addEventListener('click', confirmSelection);
-            document.getElementById('testButton').addEventListener('click', sendTestData);
+            
+            // Инициализация Яндекс виджета при загрузке
+            initYandexWidget();
         });
         
-        // Инициализация Telegram Web App
-        function initTelegramWebApp() {
-            const tg = window.Telegram.WebApp;
+        // Инициализация Яндекс виджета
+        function initYandexWidget() {
+            if (yandexWidgetInitialized) return;
             
-            // Расширяем на весь экран
-            tg.expand();
-            
-            // Меняем цвет фона
-            tg.setHeaderColor('#667eea');
-            tg.setBackgroundColor('#ffffff');
-            
-            // Включаем кнопку "Назад"
-            tg.BackButton.show();
-            tg.BackButton.onClick(function() {
-                tg.close();
-            });
-            
-            // Говорим Telegram что мы готовы
-            tg.ready();
-            
-            // Показываем что мы в Telegram
-            showStatus('✅ Telegram Web App активен', 'success');
+            // Ждем загрузки библиотеки Яндекс
+            if (window.YaDelivery) {
+                createYandexWidget();
+            } else {
+                document.addEventListener('YaNddWidgetLoad', createYandexWidget);
+            }
         }
         
-        // Инициализация браузерного режима
-        function initBrowserMode() {
-            showStatus('🌐 Режим тестирования в браузере', 'info');
+        function createYandexWidget() {
+            try {
+                window.YaDelivery.createWidget({
+                    containerId: 'delivery-widget',
+                    params: {
+                        city: "Москва",
+                        size: { height: "400px", width: "100%" },
+                        source_platform_station: "05e809bb-4521-42d9-a936-0fb0744c0fb3",
+                        physical_dims_weight_gross: 2000,
+                        delivery_price: "300 руб.",
+                        delivery_term: "2-4 дня",
+                        show_select_button: true,
+                        filter: {
+                            type: ["pickup_point", "terminal"],
+                            is_yandex_branded: false,
+                            payment_methods: ["already_paid", "card_on_receipt"],
+                            payment_methods_filter: "or"
+                        }
+                    }
+                });
+                
+                // Слушатель выбора ПВЗ на карте
+                document.addEventListener('YaNddWidgetPointSelected', function(event) {
+                    const yandexPVZ = event.detail;
+                    handleYandexPVZSelection(yandexPVZ);
+                });
+                
+                yandexWidgetInitialized = true;
+                console.log('✅ Яндекс виджет инициализирован');
+                
+            } catch (error) {
+                console.error('❌ Ошибка Яндекс виджета:', error);
+                showStatus('⚠️ Карта Яндекс временно недоступна. Выберите из списка ниже.', 'error');
+            }
         }
         
-        // Загрузка списка ПВЗ
+        function handleYandexPVZSelection(yandexPVZ) {
+            selectedPVZ = {
+                id: yandexPVZ.id,
+                name: yandexPVZ.name,
+                address: yandexPVZ.address.full_address,
+                working_hours: yandexPVZ.working_hours || '',
+                phone: yandexPVZ.phone || '',
+                source: 'yandex_widget'
+            };
+            
+            // Включаем кнопку подтверждения
+            const confirmBtn = document.getElementById('confirmButton');
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = `<span>✅ Выбрано на карте: ${selectedPVZ.name.substring(0, 25)}...</span>`;
+            
+            showStatus(`📍 Выбран ПВЗ на карте: ${selectedPVZ.name}`, 'success');
+        }
+        
+        function toggleYandexWidget() {
+            const widget = document.getElementById('yandexWidget');
+            const btn = document.getElementById('yandexBtn');
+            
+            if (widget.style.display === 'block') {
+                widget.style.display = 'none';
+                btn.innerHTML = '<span>🔍 Открыть Яндекс карту</span>';
+            } else {
+                widget.style.display = 'block';
+                btn.innerHTML = '<span>❌ Скрыть карту</span>';
+                
+                // Прокрутить к виджету
+                widget.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+        
+        // Загрузка списка ПВЗ (как раньше)
         function loadPVZOptions() {
             const container = document.getElementById('pvzOptions');
             container.innerHTML = '';
@@ -348,11 +217,7 @@
                 div.dataset.index = index;
                 
                 div.innerHTML = `
-                    <div class="pvz-icon">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                        </svg>
-                    </div>
+                    <div class="pvz-icon">📦</div>
                     <div class="pvz-info">
                         <div class="pvz-name">${pvz.name}</div>
                         <div class="pvz-address">${pvz.address}</div>
@@ -360,52 +225,28 @@
                     </div>
                 `;
                 
-                // Обработчик выбора
-                div.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    selectPVZ(this.dataset.index);
-                });
-                
-                // Для touch устройств
-                div.addEventListener('touchstart', function(e) {
-                    e.preventDefault();
-                    this.style.opacity = '0.7';
-                });
-                
-                div.addEventListener('touchend', function(e) {
-                    e.preventDefault();
-                    this.style.opacity = '1';
-                    selectPVZ(this.dataset.index);
-                });
-                
+                div.addEventListener('click', () => selectPVZFromList(index));
                 container.appendChild(div);
             });
         }
         
-        // Выбор ПВЗ
-        function selectPVZ(index) {
-            // Снимаем выделение со всех
+        function selectPVZFromList(index) {
+            selectedPVZ = pvzList[index];
+            
+            // Выделяем выбранный
             document.querySelectorAll('.pvz-option').forEach(el => {
                 el.classList.remove('selected');
             });
+            document.querySelector(`.pvz-option[data-index="${index}"]`).classList.add('selected');
             
-            // Выделяем выбранный
-            const selectedEl = document.querySelector(`.pvz-option[data-index="${index}"]`);
-            if (selectedEl) {
-                selectedEl.classList.add('selected');
-                selectedPVZ = pvzList[index];
-                
-                // Включаем кнопку подтверждения
-                const confirmBtn = document.getElementById('confirmButton');
-                confirmBtn.disabled = false;
-                confirmBtn.innerHTML = `<span>✅ Подтвердить: ${selectedPVZ.name.substring(0, 20)}...</span>`;
-                
-                // Показываем статус
-                showStatus(`📍 Выбран: ${selectedPVZ.name}`, 'info');
-            }
+            // Включаем кнопку подтверждения
+            const confirmBtn = document.getElementById('confirmButton');
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = `<span>✅ Подтвердить: ${selectedPVZ.name.substring(0, 20)}...</span>`;
+            
+            showStatus(`📍 Выбрано: ${selectedPVZ.name}`, 'info');
         }
         
-        // Подтверждение выбора
         function confirmSelection() {
             if (!selectedPVZ) {
                 showStatus('❌ Сначала выберите пункт выдачи', 'error');
@@ -417,90 +258,66 @@
                 pvz_id: selectedPVZ.id,
                 pvz_name: selectedPVZ.name,
                 pvz_address: selectedPVZ.address,
-                pvz_working_hours: selectedPVZ.hours,
-                pvz_phone: selectedPVZ.phone,
-                pvz_coordinates: selectedPVZ.coordinates,
+                pvz_working_hours: selectedPVZ.hours || selectedPVZ.working_hours || '',
+                pvz_phone: selectedPVZ.phone || '',
+                selected_from: selectedPVZ.source || 'list',
                 timestamp: Date.now()
             };
             
             sendDataToTelegram(pvzData);
         }
         
-        // Тестовые данные
-        function sendTestData() {
-            const testData = {
-                action: 'pvz_selected',
-                pvz_id: 'test_' + Date.now(),
-                pvz_name: 'Тестовый пункт выдачи',
-                pvz_address: 'Москва, ул. Тестовая, д. 1',
-                pvz_working_hours: '09:00-21:00',
-                pvz_phone: '+7 (999) 123-45-67',
-                test_mode: true,
-                timestamp: Date.now()
-            };
-            
-            sendDataToTelegram(testData);
-        }
-        
-        // Отправка данных в Telegram
         function sendDataToTelegram(data) {
-            console.log('Отправка данных:', data);
+            console.log('📤 Отправка данных в Telegram:', data);
             
-            // Показываем статус отправки
             showStatus('🔄 Отправка данных...', 'info');
             
-            if (isTelegram) {
-                // Telegram Web App режим
-                window.Telegram.WebApp.sendData(JSON.stringify(data));
+            if (isTelegram && window.Telegram.WebApp) {
+                // Важно: отправляем СТРОКУ JSON
+                const dataString = JSON.stringify(data);
+                console.log('📄 Отправляемая строка:', dataString);
                 
-                // Показываем успех
+                window.Telegram.WebApp.sendData(dataString);
+                
                 showStatus('✅ Данные отправлены! Закрываем...', 'success');
                 
-                // Закрываем через 1.5 секунды
+                // Даем время на отправку
                 setTimeout(() => {
                     window.Telegram.WebApp.close();
-                }, 1500);
-            } else {
-                // Браузерный режим
-                showStatus('📋 Тестовые данные:<br>' + 
-                    JSON.stringify(data, null, 2).replace(/\n/g, '<br>').replace(/ /g, '&nbsp;'), 
-                    'success'
-                );
+                }, 1000);
                 
-                // Для удобства тестирования
-                alert('Тестовые данные:\n' + JSON.stringify(data, null, 2));
-                console.log('Тестовые данные:', data);
+            } else {
+                // Режим отладки
+                const dataString = JSON.stringify(data, null, 2);
+                showStatus(`📋 Данные для отправки:<br><pre>${dataString}</pre>`, 'success');
+                alert('Веб-приложение не в Telegram. Данные:\n' + dataString);
             }
         }
         
-        // Показать статус
         function showStatus(message, type) {
             const statusEl = document.getElementById('statusMessage');
             statusEl.innerHTML = message;
             statusEl.className = 'status ' + (type || '');
             statusEl.style.display = 'block';
             
-            // Автоскрытие через 5 секунд
             if (type !== 'info') {
-                setTimeout(() => {
-                    statusEl.style.display = 'none';
-                }, 5000);
+                setTimeout(() => statusEl.style.display = 'none', 5000);
             }
         }
         
-        // Обработка тапов для мобильных
-        document.addEventListener('touchstart', function(e) {
-            // Предотвращаем масштабирование при двойном тапе
-            if (e.touches.length > 1) {
-                e.preventDefault();
-            }
-        }, { passive: false });
-        
-        // Предотвращаем контекстное меню на долгий тап
-        document.addEventListener('contextmenu', function(e) {
-            e.preventDefault();
-            return false;
-        });
+        function initTelegramWebApp() {
+            const tg = window.Telegram.WebApp;
+            tg.expand();
+            tg.setHeaderColor('#667eea');
+            tg.setBackgroundColor('#ffffff');
+            tg.ready();
+            
+            // Кнопка назад
+            tg.BackButton.show();
+            tg.BackButton.onClick(() => tg.close());
+            
+            console.log('✅ Telegram Web App инициализирован');
+        }
     </script>
 </body>
 </html>
