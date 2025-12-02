@@ -23,7 +23,6 @@
             background: white;
         }
         
-        /* Заголовок */
         .header {
             background: white;
             padding: 16px;
@@ -47,7 +46,6 @@
             color: #666;
         }
         
-        /* Контейнер для карты */
         .map-container {
             position: fixed;
             top: 80px;
@@ -61,7 +59,6 @@
             height: 100%;
         }
         
-        /* Скрываем загрузку */
         .loading {
             position: absolute;
             top: 50%;
@@ -72,20 +69,6 @@
             background: white;
             padding: 20px;
             border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        
-        /* Сообщение об ошибке */
-        .error {
-            display: none;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
     </style>
@@ -99,60 +82,49 @@
     <div class="map-container">
         <div id="widget-container"></div>
         <div class="loading" id="loading">Загрузка карты...</div>
-        <div class="error" id="error">
-            <h3>Ошибка загрузки</h3>
-            <p>Попробуйте обновить страницу</p>
-        </div>
     </div>
 
     <script>
-        // Глобальные переменные
-        let isTelegram = false;
-        
-        // Инициализация Telegram Web App
+        // Telegram Web App
         function initTelegram() {
             if (window.Telegram && Telegram.WebApp) {
-                isTelegram = true;
                 Telegram.WebApp.expand();
                 Telegram.WebApp.setHeaderColor('#ffffff');
                 Telegram.WebApp.setBackgroundColor('#ffffff');
                 Telegram.WebApp.ready();
-                console.log('✅ Telegram Web App инициализирован');
+                console.log('✅ Telegram Web App готов');
             }
         }
         
-        // Инициализация Яндекс виджета
+        // Яндекс виджет
         function initYandexWidget() {
-            console.log('🔄 Инициализация Яндекс виджета...');
+            console.log('🔄 Загрузка Яндекс виджета...');
             
-            // Проверяем загружена ли библиотека
-            if (typeof YaDelivery === 'undefined') {
-                console.log('⏳ Библиотека Яндекс не загружена, ждём...');
+            if (typeof YaDelivery !== 'undefined') {
+                createWidget();
+            } else {
+                document.addEventListener('YaNddWidgetLoad', createWidget);
                 
-                // Ждем события загрузки
-                document.addEventListener('YaNddWidgetLoad', createYandexWidget);
-                
-                // Таймаут
-                setTimeout(function() {
+                setTimeout(() => {
                     if (document.getElementById('loading').style.display !== 'none') {
-                        document.getElementById('loading').textContent = 'Библиотека не загрузилась';
-                        console.error('Таймаут загрузки библиотеки Яндекс');
+                        document.getElementById('loading').textContent = 'Ошибка загрузки карты';
                     }
                 }, 10000);
-                
-                return;
             }
-            
-            console.log('✅ Библиотека Яндекс загружена');
-            createYandexWidget();
         }
         
-        // Создание виджета Яндекс
-        function createYandexWidget() {
-            console.log('🛠️ Создание виджета...');
-            
+        function createWidget() {
             try {
-                // ВАЖНО: правильная конфигурация для отображения кнопки выбора
+                console.log('🛠️ Создание виджета...');
+                
+                // ВАЖНО: нужен правильный source_platform_station!
+                // Это ID станции отправления в системе Яндекс.Доставки
+                // Для теста используем станцию в Москве:
+                const stationId = "05e809bb-4521-42d9-a936-0fb0744c0fb3"; // Пример ID
+                
+                // Если у вас свой station_id, замените его:
+                // const stationId = "ВАШ_STATION_ID";
+                
                 window.yandexWidget = YaDelivery.createWidget({
                     containerId: 'widget-container',
                     params: {
@@ -161,110 +133,72 @@
                             height: "100%",
                             width: "100%"
                         },
-                        // Эти параметры критически важны для кнопки выбора
-                        show_select_button: true, // Показывать кнопку выбора
+                        // КРИТИЧЕСКИ ВАЖНЫЕ ПАРАМЕТРЫ:
+                        source_platform_station: stationId, // ID станции отправления
+                        physical_dims_weight_gross: 1000,   // Вес в граммах (минимум 1000)
+                        delivery_price: "300 ₽",            // Стоимость доставки
+                        delivery_term: "2-4 дня",           // Срок доставки
+                        show_select_button: true,           // Кнопка выбора (ДОЛЖНА быть true)
                         filter: {
-                            type: ["pickup_point"], // Только пункты выдачи
-                            is_yandex_branded: false, // Все ПВЗ, не только Яндекс
+                            type: ["pickup_point"],         // Только пункты выдачи
+                            is_yandex_branded: false,       // Все ПВЗ
                             payment_methods: ["already_paid", "card_on_receipt"],
                             payment_methods_filter: "or"
-                        },
-                        // Дополнительные параметры для правильной работы
-                        delivery_price: "300 ₽", // Фиксированная цена для отображения
-                        delivery_term: "2-4 дня" // Фиксированный срок
+                        }
                     }
                 });
                 
-                console.log('✅ Виджет Яндекс создан');
+                console.log('✅ Виджет создан с station_id:', stationId);
                 
-                // Слушаем событие выбора ПВЗ
-                document.addEventListener('YaNddWidgetPointSelected', handlePVZSelection);
+                // Событие выбора ПВЗ
+                document.addEventListener('YaNddWidgetPointSelected', function(event) {
+                    console.log('📍 Выбор ПВЗ:', event.detail);
+                    
+                    if (!event.detail) return;
+                    
+                    const pvz = event.detail;
+                    const data = {
+                        action: 'pvz_selected',
+                        pvz_id: pvz.id || '',
+                        pvz_name: pvz.name || 'Пункт выдачи',
+                        pvz_address: pvz.address?.full_address || '',
+                        pvz_working_hours: pvz.working_hours || '',
+                        pvz_phone: pvz.phone || ''
+                    };
+                    
+                    console.log('📤 Отправка:', data);
+                    
+                    if (window.Telegram && Telegram.WebApp) {
+                        Telegram.WebApp.sendData(JSON.stringify(data));
+                        setTimeout(() => {
+                            try {
+                                Telegram.WebApp.close();
+                            } catch (e) {
+                                console.log('Ошибка закрытия:', e);
+                            }
+                        }, 300);
+                    } else {
+                        console.log('Тест: данные готовы', data);
+                        alert('✅ Пункт выбран! В Telegram данные отправятся автоматически.');
+                    }
+                });
                 
-                // Скрываем индикатор загрузки через 2 секунды
-                setTimeout(function() {
+                // Скрываем загрузку
+                setTimeout(() => {
                     document.getElementById('loading').style.display = 'none';
-                    console.log('✅ Карта загружена и готова');
-                }, 2000);
+                }, 1500);
                 
             } catch (error) {
-                console.error('❌ Ошибка создания виджета:', error);
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('error').style.display = 'block';
+                console.error('❌ Ошибка:', error);
+                document.getElementById('loading').textContent = 'Ошибка: ' + error.message;
             }
         }
         
-        // Обработчик выбора ПВЗ
-        function handlePVZSelection(event) {
-            console.log('📍 Событие выбора ПВЗ:', event);
-            
-            if (!event || !event.detail) {
-                console.error('Нет данных о выбранном ПВЗ');
-                return;
-            }
-            
-            const pvz = event.detail;
-            console.log('📦 Данные ПВЗ:', pvz);
-            
-            // Формируем данные для отправки
-            const data = {
-                action: 'pvz_selected',
-                pvz_id: pvz.id || '',
-                pvz_name: pvz.name || 'Пункт выдачи',
-                pvz_address: pvz.address?.full_address || '',
-                pvz_working_hours: pvz.working_hours || '',
-                pvz_phone: pvz.phone || '',
-                timestamp: new Date().toISOString()
-            };
-            
-            console.log('📤 Отправка данных:', data);
-            
-            // Отправляем в Telegram
-            if (isTelegram && window.Telegram && Telegram.WebApp) {
-                try {
-                    Telegram.WebApp.sendData(JSON.stringify(data));
-                    console.log('✅ Данные отправлены в Telegram');
-                    
-                    // Закрываем Web App без алертов
-                    setTimeout(function() {
-                        try {
-                            Telegram.WebApp.close();
-                        } catch (closeError) {
-                            console.log('Ошибка при закрытии:', closeError);
-                        }
-                    }, 500);
-                    
-                } catch (sendError) {
-                    console.error('❌ Ошибка отправки:', sendError);
-                    // Простое сообщение без JSON
-                    alert('✅ Пункт выдачи выбран! Возвращайтесь в бота.');
-                }
-            } else {
-                // Режим тестирования в браузере
-                console.log('📋 Данные для отправки (тест):', data);
-                // Простое сообщение без JSON
-                alert('✅ Пункт выдачи выбран! В реальном режиме данные отправятся автоматически.');
-            }
-        }
-        
-        // Основная инициализация при загрузке
+        // Запуск
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 Запуск Web App...');
-            
+            console.log('🚀 Запуск...');
             initTelegram();
             initYandexWidget();
-            
-            // Добавляем обработчик для кнопки "Назад" в Telegram
-            if (window.Telegram && Telegram.WebApp && Telegram.WebApp.BackButton) {
-                Telegram.WebApp.BackButton.show();
-                Telegram.WebApp.BackButton.onClick(function() {
-                    Telegram.WebApp.close();
-                });
-            }
-        });
-        
-        // Ждем полной загрузки страницы
-        window.addEventListener('load', function() {
-            console.log('📄 Страница полностью загружена');
         });
     </script>
 </body>
