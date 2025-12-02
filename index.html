@@ -66,10 +66,6 @@
             transform: translate(-50%, -50%);
             font-size: 16px;
             color: #666;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
     </style>
 </head>
@@ -89,117 +85,111 @@
         function initTelegram() {
             if (window.Telegram && Telegram.WebApp) {
                 Telegram.WebApp.expand();
-                Telegram.WebApp.setHeaderColor('#ffffff');
-                Telegram.WebApp.setBackgroundColor('#ffffff');
                 Telegram.WebApp.ready();
                 console.log('✅ Telegram Web App готов');
             }
         }
         
-        // Яндекс виджет
-        function initYandexWidget() {
-            console.log('🔄 Загрузка Яндекс виджета...');
+        // Создание Яндекс виджета
+        function createYandexWidget() {
+            console.log('🛠️ Создание виджета...');
             
-            if (typeof YaDelivery !== 'undefined') {
-                createWidget();
-            } else {
-                document.addEventListener('YaNddWidgetLoad', createWidget);
-                
-                setTimeout(() => {
-                    if (document.getElementById('loading').style.display !== 'none') {
-                        document.getElementById('loading').textContent = 'Ошибка загрузки карты';
-                    }
-                }, 10000);
-            }
-        }
-        
-        function createWidget() {
             try {
-                console.log('🛠️ Создание виджета...');
+                // Тестовый station_id для Москвы
+                const testStationId = "05e809bb-4521-42d9-a936-0fb0744c0fb3";
                 
-                // ВАЖНО: нужен правильный source_platform_station!
-                // Это ID станции отправления в системе Яндекс.Доставки
-                // Для теста используем станцию в Москве:
-                const stationId = "05e809bb-4521-42d9-a936-0fb0744c0fb3"; // Пример ID
-                
-                // Если у вас свой station_id, замените его:
-                // const stationId = "ВАШ_STATION_ID";
-                
+                // Вариант 1: С минимальными параметрами
                 window.yandexWidget = YaDelivery.createWidget({
                     containerId: 'widget-container',
                     params: {
                         city: "Москва",
-                        size: {
-                            height: "100%",
-                            width: "100%"
-                        },
-                        // КРИТИЧЕСКИ ВАЖНЫЕ ПАРАМЕТРЫ:
-                        source_platform_station: stationId, // ID станции отправления
-                        physical_dims_weight_gross: 1000,   // Вес в граммах (минимум 1000)
-                        delivery_price: "300 ₽",            // Стоимость доставки
-                        delivery_term: "2-4 дня",           // Срок доставки
-                        show_select_button: true,           // Кнопка выбора (ДОЛЖНА быть true)
+                        size: { height: "100%", width: "100%" },
+                        source_platform_station: testStationId,
+                        physical_dims_weight_gross: 1000,
+                        delivery_price: "", // Пусто - не показываем цену
+                        delivery_term: "",  // Пусто - не показываем срок
+                        show_select_button: true,
                         filter: {
-                            type: ["pickup_point"],         // Только пункты выдачи
-                            is_yandex_branded: false,       // Все ПВЗ
-                            payment_methods: ["already_paid", "card_on_receipt"],
-                            payment_methods_filter: "or"
+                            type: ["pickup_point"],
+                            is_yandex_branded: false,
+                            payment_methods: ["already_paid", "card_on_receipt"]
                         }
                     }
                 });
                 
-                console.log('✅ Виджет создан с station_id:', stationId);
+                console.log('✅ Виджет создан');
                 
-                // Событие выбора ПВЗ
+                // Обработчик выбора ПВЗ
                 document.addEventListener('YaNddWidgetPointSelected', function(event) {
                     console.log('📍 Выбор ПВЗ:', event.detail);
                     
                     if (!event.detail) return;
                     
                     const pvz = event.detail;
+                    
+                    // Только основные данные
                     const data = {
                         action: 'pvz_selected',
-                        pvz_id: pvz.id || '',
+                        pvz_id: pvz.id,
                         pvz_name: pvz.name || 'Пункт выдачи',
-                        pvz_address: pvz.address?.full_address || '',
-                        pvz_working_hours: pvz.working_hours || '',
-                        pvz_phone: pvz.phone || ''
+                        pvz_address: pvz.address?.full_address || pvz.address || ''
                     };
                     
-                    console.log('📤 Отправка:', data);
+                    console.log('📤 Отправка данных:', data);
                     
+                    // Отправка в Telegram
                     if (window.Telegram && Telegram.WebApp) {
                         Telegram.WebApp.sendData(JSON.stringify(data));
+                        // Закрываем без алертов
                         setTimeout(() => {
                             try {
                                 Telegram.WebApp.close();
                             } catch (e) {
-                                console.log('Ошибка закрытия:', e);
+                                // Игнорируем ошибку закрытия
                             }
-                        }, 300);
+                        }, 200);
                     } else {
+                        // Тестовый режим
                         console.log('Тест: данные готовы', data);
-                        alert('✅ Пункт выбран! В Telegram данные отправятся автоматически.');
                     }
                 });
                 
                 // Скрываем загрузку
                 setTimeout(() => {
                     document.getElementById('loading').style.display = 'none';
-                }, 1500);
+                }, 1000);
                 
             } catch (error) {
-                console.error('❌ Ошибка:', error);
-                document.getElementById('loading').textContent = 'Ошибка: ' + error.message;
+                console.error('❌ Ошибка создания виджета:', error);
+                document.getElementById('loading').textContent = 'Ошибка загрузки карты';
             }
         }
         
-        // Запуск
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 Запуск...');
+        // Инициализация
+        function init() {
+            console.log('🚀 Инициализация...');
+            
+            // Telegram
             initTelegram();
-            initYandexWidget();
-        });
+            
+            // Яндекс виджет
+            if (typeof YaDelivery !== 'undefined') {
+                createYandexWidget();
+            } else {
+                // Ждем загрузки библиотеки
+                document.addEventListener('YaNddWidgetLoad', createYandexWidget);
+                
+                // Таймаут
+                setTimeout(() => {
+                    if (document.getElementById('loading').style.display !== 'none') {
+                        document.getElementById('loading').textContent = 'Ошибка загрузки';
+                    }
+                }, 8000);
+            }
+        }
+        
+        // Запуск при загрузке
+        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
