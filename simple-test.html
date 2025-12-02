@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Простой тест</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { font-family: Arial; padding: 20px; text-align: center; }
+        button { padding: 15px 30px; font-size: 18px; margin: 10px; }
+        #log { background: #f0f0f0; padding: 15px; margin-top: 20px; text-align: left; }
+    </style>
+</head>
+<body>
+    <h1>Простой тест Web App</h1>
+    <p>Нажмите кнопку чтобы отправить данные в бота</p>
+    
+    <button onclick="sendData()">📤 Отправить "Hello"</button>
+    <button onclick="sendJson()">📦 Отправить JSON</button>
+    
+    <div id="log">Лог:</div>
+
+    <script>
+        const logEl = document.getElementById('log');
+        
+        function log(msg) {
+            console.log(msg);
+            logEl.innerHTML += msg + '<br>';
+        }
+        
+        // Проверяем Telegram при загрузке
+        if (window.Telegram && Telegram.WebApp) {
+            const tg = Telegram.WebApp;
+            tg.expand();
+            tg.ready();
+            log('✅ Telegram Web App готов');
+            log(`👤 User ID: ${tg.initDataUnsafe?.user?.id || 'неизвестно'}`);
+        } else {
+            log('❌ Telegram Web App не найден');
+        }
+        
+        function sendData() {
+            log('--- Отправка простых данных ---');
+            
+            if (!window.Telegram || !Telegram.WebApp) {
+                log('❌ Telegram не доступен');
+                return;
+            }
+            
+            const tg = Telegram.WebApp;
+            
+            // Простые данные
+            const data = "Hello from Web App!";
+            
+            try {
+                tg.sendData(data);
+                log('✅ Данные отправлены: "' + data + '"');
+            } catch (error) {
+                log('❌ Ошибка: ' + error.message);
+            }
+        }
+        
+        function sendJson() {
+            log('--- Отправка JSON ---');
+            
+            if (!window.Telegram || !Telegram.WebApp) {
+                log('❌ Telegram не доступен');
+                return;
+            }
+            
+            const tg = Telegram.WebApp;
+            
+            // Простой JSON
+            const data = {
+                test: "simple",
+                number: 123,
+                bool: true,
+                timestamp: Date.now()
+            };
+            
+            try {
+                tg.sendData(JSON.stringify(data));
+                log('✅ JSON отправлен: ' + JSON.stringify(data));
+            } catch (error) {
+                log('❌ Ошибка: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>
