@@ -62,6 +62,30 @@
             font-size: 16px;
             color: #666;
         }
+        
+        /* Кнопка выбора */
+        .select-btn {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            padding: 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            text-align: center;
+            cursor: pointer;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        .select-btn:active {
+            background: #5a67d8;
+        }
     </style>
 </head>
 <body>
@@ -74,9 +98,12 @@
         <div id="widget-container"></div>
         <div class="loading" id="loading">Загрузка карты...</div>
     </div>
+    
+    <!-- Наша кнопка выбора -->
+    <button class="select-btn" id="selectBtn">✅ Выбрать этот пункт</button>
 
     <script>
-        // Проверка Telegram Web App
+        let selectedPVZ = null;
         const isTelegram = !!(window.Telegram && Telegram.WebApp);
         
         // Инициализация Telegram
@@ -96,8 +123,8 @@
                 // Тестовый station_id
                 const testStationId = "05e809bb-4521-42d9-a936-0fb0744c0fb3";
                 
-                // Создаем виджет
-                YaDelivery.createWidget({
+                // Создаем виджет БЕЗ кнопки выбора (show_select_button: false)
+                const widget = YaDelivery.createWidget({
                     containerId: 'widget-container',
                     params: {
                         city: "Москва",
@@ -106,7 +133,7 @@
                         physical_dims_weight_gross: 1000,
                         delivery_price: "от 300 ₽",
                         delivery_term: "1-3 дня",
-                        show_select_button: true,
+                        show_select_button: false, // СКРЫВАЕМ кнопку Яндекса
                         filter: {
                             type: ["pickup_point"],
                             is_yandex_branded: false
@@ -116,48 +143,18 @@
                 
                 console.log('✅ Виджет создан');
                 
-                // Событие выбора ПВЗ
+                // Слушаем два типа событий:
+                
+                // 1. Событие выбора ПВЗ (при клике на метку)
                 document.addEventListener('YaNddWidgetPointSelected', function(event) {
-                    console.log('Получены данные ПВЗ:', event.detail);
-                    
-                    if (!event.detail) return;
-                    
-                    const pvz = event.detail;
-                    
-                    // Формируем данные
-                    const data = {
-                        action: 'pvz_selected',
-                        pvz_id: pvz.id || '',
-                        pvz_name: pvz.name || 'Пункт выдачи',
-                        pvz_address: pvz.address?.full_address || '',
-                        pvz_working_hours: pvz.working_hours || '',
-                        pvz_phone: pvz.phone || '',
-                        timestamp: Date.now()
-                    };
-                    
-                    console.log('Данные для отправки:', data);
-                    
-                    // Отправка в Telegram
-                    if (isTelegram) {
-                        try {
-                            // 1. Отправляем данные
-                            Telegram.WebApp.sendData(JSON.stringify(data));
-                            console.log('✅ Данные отправлены в Telegram');
-                            
-                            // 2. НЕ показываем никаких сообщений!
-                            // 3. Сразу закрываем Web App
-                            setTimeout(function() {
-                                Telegram.WebApp.close();
-                            }, 100);
-                            
-                        } catch (error) {
-                            console.error('Ошибка отправки:', error);
-                        }
-                    } else {
-                        // Только для теста в браузере
-                        console.log('Тестовые данные:', data);
-                        // Никаких алертов!
-                    }
+                    console.log('Выбор ПВЗ (клик):', event.detail);
+                    handlePVZSelection(event.detail);
+                });
+                
+                // 2. Событие наведения на ПВЗ (backup)
+                document.addEventListener('YaNddWidgetPointHovered', function(event) {
+                    console.log('Наведение на ПВЗ:', event.detail);
+                    // Можно использовать как backup
                 });
                 
                 // Скрываем загрузку
@@ -171,7 +168,70 @@
             }
         }
         
-        // Инициализация
+        // Обработка выбора ПВЗ
+        function handlePVZSelection(pvzData) {
+            if (!pvzData) return;
+            
+            selectedPVZ = {
+                id: pvzData.id || '',
+                name: pvzData.name || 'Пункт выдачи',
+                address: pvzData.address?.full_address || '',
+                working_hours: pvzData.working_hours || '',
+                phone: pvzData.phone || ''
+            };
+            
+            console.log('Выбран ПВЗ:', selectedPVZ);
+            
+            // Показываем нашу кнопку
+            document.getElementById('selectBtn').style.display = 'block';
+            
+            // Обновляем текст кнопки
+            if (selectedPVZ.name.length > 20) {
+                document.getElementById('selectBtn').textContent = `✅ Выбрать "${selectedPVZ.name.substring(0, 20)}..."`;
+            } else {
+                document.getElementById('selectBtn').textContent = `✅ Выбрать "${selectedPVZ.name}"`;
+            }
+        }
+        
+        // Обработчик нажатия на нашу кнопку
+        document.getElementById('selectBtn').addEventListener('click', function() {
+            if (!selectedPVZ) return;
+            
+            console.log('Нажата кнопка выбора');
+            
+            // Формируем данные
+            const data = {
+                action: 'pvz_selected',
+                pvz_id: selectedPVZ.id,
+                pvz_name: selectedPVZ.name,
+                pvz_address: selectedPVZ.address,
+                pvz_working_hours: selectedPVZ.working_hours,
+                pvz_phone: selectedPVZ.phone,
+                timestamp: Date.now()
+            };
+            
+            console.log('Отправка данных:', data);
+            
+            // Отправка в Telegram
+            if (isTelegram) {
+                try {
+                    Telegram.WebApp.sendData(JSON.stringify(data));
+                    console.log('✅ Данные отправлены');
+                    
+                    // Немедленное закрытие
+                    setTimeout(function() {
+                        Telegram.WebApp.close();
+                    }, 50);
+                    
+                } catch (error) {
+                    console.error('Ошибка отправки:', error);
+                }
+            } else {
+                console.log('Тестовые данные:', data);
+            }
+        });
+        
+        // Инициализация при загрузке
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Запуск Web App');
             
@@ -179,6 +239,14 @@
                 createYandexWidget();
             } else {
                 document.addEventListener('YaNddWidgetLoad', createYandexWidget);
+            }
+            
+            // Кнопка "Назад" в Telegram
+            if (isTelegram && Telegram.WebApp.BackButton) {
+                Telegram.WebApp.BackButton.show();
+                Telegram.WebApp.BackButton.onClick(function() {
+                    Telegram.WebApp.close();
+                });
             }
         });
     </script>
