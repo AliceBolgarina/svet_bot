@@ -99,15 +99,21 @@
                 const testStationId = "05e809bb-4521-42d9-a936-0fb0744c0fb3";
                 
                 // Вариант 1: С минимальными параметрами
-                window.yandexWidget = YaDelivery.createWidget({
+               window.yandexWidget = YaDelivery.createWidget({
                     containerId: 'widget-container',
                     params: {
                         city: "Москва",
                         size: { height: "100%", width: "100%" },
-                        // Без station_id и расчета доставки
+                        source_platform_station: "05e809bb-4521-42d9-a936-0fb0744c0fb3",
+                        physical_dims_weight_gross: 1000,
+                        delivery_price: "от 300 ₽", // Указываем цену (может быть важно для кнопки)
+                        delivery_term: "от 1 дня",  // Указываем срок
                         show_select_button: true,
                         filter: {
-                            type: ["pickup_point"]
+                            type: ["pickup_point", "terminal"],
+                            is_yandex_branded: false,
+                            payment_methods: ["already_paid", "card_on_receipt"],
+                            payment_methods_filter: "or"
                         }
                     }
                 });
