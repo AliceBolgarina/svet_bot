@@ -104,15 +104,10 @@
                     params: {
                         city: "Москва",
                         size: { height: "100%", width: "100%" },
-                        source_platform_station: testStationId,
-                        physical_dims_weight_gross: 1000,
-                        delivery_price: "", // Пусто - не показываем цену
-                        delivery_term: "",  // Пусто - не показываем срок
+                        // Без station_id и расчета доставки
                         show_select_button: true,
                         filter: {
-                            type: ["pickup_point"],
-                            is_yandex_branded: false,
-                            payment_methods: ["already_paid", "card_on_receipt"]
+                            type: ["pickup_point"]
                         }
                     }
                 });
