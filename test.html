@@ -3,113 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram Web App Test</title>
+    <title>Web App Тест</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            text-align: center;
-        }
-        button {
-            padding: 15px 30px;
-            font-size: 18px;
-            margin: 10px;
-            background: #0088cc;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-        }
-        #status {
-            margin-top: 20px;
-            padding: 15px;
-            background: #f0f0f0;
-            border-radius: 10px;
-            text-align: left;
-        }
+        body { font-family: Arial; padding: 20px; text-align: center; }
+        button { padding: 15px; margin: 10px; font-size: 16px; }
+        #log { background: #f0f0f0; padding: 15px; margin-top: 20px; text-align: left; }
     </style>
 </head>
 <body>
-    <h1>Telegram Web App Test</h1>
-    <p>Проверка работы Web App в Telegram</p>
+    <h1>Web App Тест</h1>
+    <p>Проверка отправки данных в бота</p>
     
-    <button onclick="sendTestData()">📤 Отправить данные</button>
+    <button onclick="sendData()">📤 Отправить тестовые данные</button>
     <button onclick="checkTelegram()">🔍 Проверить Telegram</button>
     
-    <div id="status">Статус: ожидание...</div>
+    <div id="log">Лог:</div>
 
     <script>
-        let status = document.getElementById('status');
+        const logEl = document.getElementById('log');
         
-        function log(message) {
-            console.log(message);
-            status.innerHTML += message + '<br>';
+        function log(msg) {
+            console.log(msg);
+            logEl.innerHTML += msg + '<br>';
         }
         
-        // Проверяем Telegram Web App
         function checkTelegram() {
             log('--- Проверка Telegram ---');
             
-            if (window.Telegram) {
-                log('✅ window.Telegram существует');
+            if (window.Telegram && Telegram.WebApp) {
+                const tg = Telegram.WebApp;
+                log('✅ Telegram Web App найден');
+                log(`Версия: ${tg.version}`);
+                log(`Платформа: ${tg.platform}`);
+                log(`initData: ${tg.initData ? 'Есть (' + tg.initData.length + ' chars)' : 'НЕТ!'}`);
+                log(`initDataUnsafe.user: ${tg.initDataUnsafe?.user?.id || 'НЕТ'}`);
                 
-                if (Telegram.WebApp) {
-                    log('✅ Telegram.WebApp существует');
-                    log(`Версия: ${Telegram.WebApp.version}`);
-                    log(`Платформа: ${Telegram.WebApp.platform}`);
-                    log(`Инициатор: ${Telegram.WebApp.initData}`);
-                    
-                    // Инициализируем
-                    Telegram.WebApp.expand();
-                    Telegram.WebApp.ready();
-                    log('✅ Web App инициализирован');
-                } else {
-                    log('❌ Telegram.WebApp не существует');
-                }
+                tg.expand();
+                tg.ready();
+                log('✅ Web App инициализирован');
             } else {
-                log('❌ window.Telegram не существует');
-                log('Это может быть потому что:');
-                log('1. Страница открыта не в Telegram');
-                log('2. Telegram не загрузил скрипт');
-                log('3. Проблема с HTTPS');
+                log('❌ Telegram Web App не найден');
             }
         }
         
-        // Отправка данных
-        function sendTestData() {
+        function sendData() {
             log('--- Отправка данных ---');
             
             if (!window.Telegram || !Telegram.WebApp) {
-                log('❌ Telegram Web App не доступен');
+                log('❌ Telegram не доступен');
+                return;
+            }
+            
+            const tg = Telegram.WebApp;
+            
+            // Проверяем initData
+            if (!tg.initData) {
+                log('❌ КРИТИЧЕСКО: НЕТ initData!');
+                log('Без initData Telegram не отправит данные боту');
+                log('Причина: Web App открыт в режиме предпросмотра');
                 return;
             }
             
             const testData = {
-                action: 'test_from_webapp',
-                message: 'Привет из Telegram Web App!',
+                action: 'test_from_html',
+                message: 'Тестовая отправка',
                 timestamp: new Date().toISOString(),
-                user_id: Telegram.WebApp.initDataUnsafe?.user?.id || 'unknown'
+                user_id: tg.initDataUnsafe?.user?.id || 'unknown'
             };
             
-            log(`Отправка: ${JSON.stringify(testData)}`);
+            log(`📦 Данные: ${JSON.stringify(testData)}`);
+            log(`👤 User ID: ${tg.initDataUnsafe?.user?.id || 'unknown'}`);
             
             try {
-                Telegram.WebApp.sendData(JSON.stringify(testData));
-                log('✅ Данные отправлены через sendData()');
+                // Метод 1: Стандартный sendData
+                tg.sendData(JSON.stringify(testData));
+                log('✅ Метод 1: sendData() вызван');
                 
+                // Метод 2: Пробуем через postEvent (иногда работает)
                 setTimeout(() => {
-                    Telegram.WebApp.close();
-                    log('✅ Web App закрыт');
-                }, 1000);
+                    try {
+                        if (window.TelegramWebviewProxy) {
+                            window.TelegramWebviewProxy.postEvent('web_app_data_send', {
+                                data: JSON.stringify(testData)
+                            });
+                            log('✅ Метод 2: postEvent вызван');
+                        }
+                    } catch (e) {
+                        log(`⚠️ Метод 2 ошибка: ${e.message}`);
+                    }
+                }, 100);
+                
+                // Метод 3: Показываем кнопку для ручной отправки через deep link
+                const deepLink = `https://t.me/${tg.initDataUnsafe?.start_param || 'bot'}`;
+                log(`🔗 Deep link: ${deepLink}`);
                 
             } catch (error) {
-                log(`❌ Ошибка: ${error.message}`);
+                log(`❌ Ошибка отправки: ${error.message}`);
             }
+            
+            log('--- Отправка завершена ---');
         }
         
-        // Автоматически проверяем при загрузке
-        window.addEventListener('load', function() {
+        // Автопроверка при загрузке
+        window.addEventListener('load', () => {
             log('Страница загружена');
             setTimeout(checkTelegram, 500);
         });
