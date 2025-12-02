@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест Web App</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 400px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; }
+        h1 { margin-bottom: 20px; text-align: center; }
+        .btn { width: 100%; padding: 15px; background: #667eea; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; margin: 10px 0; }
+        .log { background: #f0f0f0; padding: 10px; border-radius: 5px; margin-top: 20px; font-family: monospace; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Тест отправки данных</h1>
+        <p>Это тестовый Web App для проверки отправки данных в бота.</p>
+        
+        <button class="btn" id="testBtn1">Тест 1: Отправить простые данные</button>
+        <button class="btn" id="testBtn2">Тест 2: Отправить данные ПВЗ</button>
+        
+        <div class="log" id="log">Лог:</div>
+    </div>
+
+    <script>
+        let log = document.getElementById('log');
+        
+        // Функция для логирования
+        function addLog(message) {
+            log.innerHTML += message + '<br>';
+            console.log(message);
+        }
+        
+        // Проверяем Telegram Web App
+        if (window.Telegram && Telegram.WebApp) {
+            addLog('✅ Telegram Web App обнаружен');
+            Telegram.WebApp.expand();
+            Telegram.WebApp.ready();
+        } else {
+            addLog('❌ Telegram Web App не найден (тестовый режим)');
+        }
+        
+        // Тест 1: Простые данные
+        document.getElementById('testBtn1').addEventListener('click', function() {
+            addLog('--- Тест 1: Простые данные ---');
+            
+            const data = {
+                action: 'test',
+                message: 'Привет от Web App!',
+                timestamp: new Date().toISOString()
+            };
+            
+            addLog('Данные: ' + JSON.stringify(data));
+            
+            if (window.Telegram && Telegram.WebApp && Telegram.WebApp.sendData) {
+                try {
+                    Telegram.WebApp.sendData(JSON.stringify(data));
+                    addLog('✅ Данные отправлены через sendData()');
+                    
+                    // Пробуем закрыть
+                    setTimeout(() => {
+                        try {
+                            Telegram.WebApp.close();
+                            addLog('✅ Web App закрыт');
+                        } catch (e) {
+                            addLog('⚠️ Не удалось закрыть: ' + e.message);
+                        }
+                    }, 500);
+                    
+                } catch (error) {
+                    addLog('❌ Ошибка отправки: ' + error.message);
+                }
+            } else {
+                addLog('❌ Telegram.WebApp.sendData не доступен');
+            }
+        });
+        
+        // Тест 2: Данные ПВЗ
+        document.getElementById('testBtn2').addEventListener('click', function() {
+            addLog('--- Тест 2: Данные ПВЗ ---');
+            
+            const data = {
+                action: 'pvz_selected',
+                pvz_id: 'test_12345',
+                pvz_name: 'Тестовый пункт выдачи',
+                pvz_address: 'Москва, ул. Тестовая, д. 1',
+                pvz_working_hours: '09:00-18:00',
+                pvz_phone: '+79990001122',
+                timestamp: Date.now()
+            };
+            
+            addLog('Данные ПВЗ: ' + JSON.stringify(data));
+            
+            if (window.Telegram && Telegram.WebApp && Telegram.WebApp.sendData) {
+                try {
+                    Telegram.WebApp.sendData(JSON.stringify(data));
+                    addLog('✅ Данные ПВЗ отправлены');
+                    
+                    setTimeout(() => {
+                        try {
+                            Telegram.WebApp.close();
+                            addLog('✅ Web App закрыт');
+                        } catch (e) {
+                            addLog('⚠️ Ошибка закрытия: ' + e.message);
+                        }
+                    }, 500);
+                    
+                } catch (error) {
+                    addLog('❌ Ошибка отправки: ' + error.message);
+                }
+            } else {
+                addLog('❌ Telegram.WebApp.sendData не доступен');
+            }
+        });
+        
+        addLog('✅ Web App загружен и готов');
+    </script>
+</body>
+</html>
