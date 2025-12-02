@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Диагностика Web App</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        button { display: block; width: 100%; padding: 15px; margin: 10px 0; font-size: 16px; }
+        .good { color: green; font-weight: bold; }
+        .bad { color: red; font-weight: bold; }
+        .info { background: #f0f0f0; padding: 15px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Диагностика Telegram Web App</h1>
+    
+    <div id="status" class="info">
+        Проверка...
+    </div>
+    
+    <button onclick="diagnose()">🩺 Запустить диагностику</button>
+    <button onclick="sendTestData()" id="sendBtn" disabled>📤 Отправить тест (недоступно)</button>
+    
+    <div id="results" class="info"></div>
+
+    <script>
+        const status = document.getElementById('status');
+        const results = document.getElementById('results');
+        const sendBtn = document.getElementById('sendBtn');
+        let tg = null;
+        let canSend = false;
+        
+        function logToResults(msg) {
+            results.innerHTML += msg + '<br>';
+            console.log(msg);
+        }
+        
+        function clearResults() {
+            results.innerHTML = '';
+        }
+        
+        function diagnose() {
+            clearResults();
+            logToResults('=== ДИАГНОСТИКА TELEGRAM WEB APP ===');
+            
+            // 1. Проверяем объект Telegram
+            if (!window.Telegram) {
+                logToResults('❌ window.Telegram не существует');
+                status.innerHTML = '<span class="bad">❌ Telegram не загружен</span>';
+                return;
+            }
+            
+            logToResults('✅ window.Telegram существует');
+            
+            // 2. Проверяем Telegram.WebApp
+            if (!Telegram.WebApp) {
+                logToResults('❌ Telegram.WebApp не существует');
+                status.innerHTML = '<span class="bad">❌ Telegram.WebApp не найден</span>';
+                return;
+            }
+            
+            tg = Telegram.WebApp;
+            logToResults('✅ Telegram.WebApp найден');
+            
+            // 3. Инициализируем
+            try {
+                tg.expand();
+                if (tg.ready) tg.ready();
+                logToResults('✅ Web App инициализирован');
+            } catch (e) {
+                logToResults(`⚠️ Ошибка инициализации: ${e.message}`);
+            }
+            
+            // 4. Проверяем критически важные свойства
+            logToResults(`📱 Версия: ${tg.version || 'неизвестно'}`);
+            logToResults(`🖥️ Платформа: ${tg.platform || 'неизвестно'}`);
+            
+            // 5. ПРОВЕРЯЕМ initData - САМОЕ ВАЖНОЕ!
+            if (!tg.initData) {
+                logToResults('<span class="bad">❌ КРИТИЧЕСКО: НЕТ initData!</span>');
+                logToResults('Это значит Web App открыт в режиме предпросмотра');
+                logToResults('Без initData Telegram не отправит данные боту');
+                status.innerHTML = '<span class="bad">❌ Режим предпросмотра (нет initData)</span>';
+                canSend = false;
+                sendBtn.disabled = true;
+                sendBtn.textContent = '📤 Отправить тест (недоступно - нет initData)';
+            } else {
+                logToResults(`<span class="good">✅ initData ЕСТЬ! (${tg.initData.length} символов)</span>`);
+                logToResults(`👤 User ID: ${tg.initDataUnsafe?.user?.id || 'неизвестно'}`);
+                logToResults(`💬 Chat ID: ${tg.initDataUnsafe?.chat?.id || 'неизвестно'}`);
+                logToResults(`🏁 Start param: ${tg.initDataUnsafe?.start_param || 'нет'}`);
+                
+                status.innerHTML = '<span class="good">✅ Web App готов к отправке</span>';
+                canSend = true;
+                sendBtn.disabled = false;
+                sendBtn.textContent = '📤 Отправить тестовые данные';
+            }
+            
+            // 6. Проверяем метод sendData
+            if (typeof tg.sendData !== 'function') {
+                logToResults('<span class="bad">❌ tg.sendData не функция!</span>');
+                canSend = false;
+                sendBtn.disabled = true;
+            } else {
+                logToResults('✅ tg.sendData является функцией');
+            }
+            
+            logToResults('=== ДИАГНОСТИКА ЗАВЕРШЕНА ===');
+        }
+        
+        function sendTestData() {
+            if (!canSend || !tg) {
+                logToResults('❌ Нельзя отправить: диагностика не пройдена');
+                return;
+            }
+            
+            clearResults();
+            logToResults('=== ОТПРАВКА ТЕСТОВЫХ ДАННЫХ ===');
+            
+            const testData = {
+                action: 'diagnostic_test',
+                message: 'Тест из диагностического Web App',
+                timestamp: new Date().toISOString(),
+                user_id: tg.initDataUnsafe?.user?.id || 'unknown',
+                chat_id: tg.initDataUnsafe?.chat?.id || 'unknown',
+                has_initData: !!tg.initData,
+                initData_length: tg.initData ? tg.initData.length : 0
+            };
+            
+            logToResults(`📦 Подготовлены данные: ${JSON.stringify(testData)}`);
+            
+            try {
+                // Отправляем
+                tg.sendData(JSON.stringify(testData));
+                logToResults('<span class="good">✅ tg.sendData() успешно вызван</span>');
+                logToResults('Если в боте нет логов, значит Telegram не передал данные');
+                
+                // Показываем инструкцию
+                logToResults('<br>📋 Что должно произойти:');
+                logToResults('1. Telegram получил данные через sendData()');
+                logToResults('2. Telegram должен отправить их боту как web_app_data');
+                logToResults('3. Бот должен получить и обработать их');
+                logToResults('4. Бот должен ответить "✅ Данные получены!"');
+                
+            } catch (error) {
+                logToResults(`<span class="bad">❌ Ошибка sendData: ${error.message}</span>`);
+            }
+            
+            logToResults('=== ОТПРАВКА ЗАВЕРШЕНА ===');
+        }
+        
+        // Автодиагностика при загрузке
+        window.addEventListener('load', () => {
+            status.innerHTML = 'Страница загружена, нажмите "Запустить диагностику"';
+            setTimeout(diagnose, 1000);
+        });
+    </script>
+</body>
+</html>
