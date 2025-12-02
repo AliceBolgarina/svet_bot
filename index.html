@@ -81,32 +81,54 @@
             color: #856404;
         }
         
-        /* Для Telegram Web App */
-        .telegram-btn {
+        /* Кнопка поиска города */
+        .city-search {
             position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #4CAF50;
+            top: 90px;
+            left: 20px;
+            right: 20px;
+            z-index: 100;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .city-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            font-size: 16px;
+            background: white;
+        }
+        
+        .city-btn {
+            padding: 12px 20px;
+            background: #667eea;
             color: white;
             border: none;
-            border-radius: 12px;
-            padding: 14px 28px;
+            border-radius: 10px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            display: none;
-            z-index: 100;
-            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
-        }
-        
-        .telegram-btn:active {
-            transform: translateX(-50%) scale(0.95);
         }
         
         /* Убираем скроллбар */
         ::-webkit-scrollbar {
             display: none;
+        }
+        
+        /* Подсказка */
+        .hint {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            z-index: 50;
         }
     </style>
 </head>
@@ -117,6 +139,12 @@
         <p>Нажмите на пункт на карте для выбора</p>
     </div>
     
+    <!-- Поиск города -->
+    <div class="city-search" id="citySearch" style="display: none;">
+        <input type="text" class="city-input" id="cityInput" placeholder="Введите город..." value="Москва">
+        <button class="city-btn" id="cityBtn">Искать</button>
+    </div>
+    
     <!-- Карта Яндекс -->
     <div class="map-container">
         <div class="loading" id="loading">Загрузка карты...</div>
@@ -125,17 +153,17 @@
             Карта временно недоступна.<br>
             Попробуйте позже.
         </div>
+        
+        <div class="hint" id="hint">
+            🔍 Нажмите на ПВЗ на карте, затем на кнопку "Выбрать этот пункт" в окне
+        </div>
     </div>
-    
-    <!-- Кнопка для Telegram (скрыта пока не выбран ПВЗ) -->
-    <button class="telegram-btn" id="telegramBtn">
-        ✅ Выбрать этот пункт
-    </button>
     
     <script>
         // Глобальные переменные
         let selectedPVZ = null;
         let isTelegram = false;
+        let yandexWidget = null;
         
         // Инициализация при загрузке
         document.addEventListener('DOMContentLoaded', function() {
@@ -144,6 +172,9 @@
                 isTelegram = true;
                 initTelegram();
             }
+            
+            // Инициализация поиска города
+            initCitySearch();
             
             // Запускаем Яндекс виджет
             initYandexMap();
@@ -175,34 +206,39 @@
                 // Показываем карту
                 document.getElementById('yandex-map').style.display = 'block';
                 
-                // Создаем виджет с минимальными настройками
-                YaDelivery.createWidget({
+                // Показываем поиск города
+                document.getElementById('citySearch').style.display = 'flex';
+                
+                // Получаем выбранный город
+                const city = document.getElementById('cityInput').value || 'Москва';
+                
+                // Создаем виджет с настройками из документации
+                yandexWidget = YaDelivery.createWidget({
                     containerId: 'yandex-map',
                     params: {
-                        city: "Москва",  // Можно менять
+                        city: city,
                         size: {
                             height: "100%",
                             width: "100%"
                         },
-                        // БЕЗ source_platform_station!
-                        // БЕЗ delivery_price!
-                        // БЕЗ delivery_term!
-                        show_select_button: true,  // Кнопка выбора в поп-апе
+                        delivery_price: "300 ₽",           // Фиксированная цена
+                        delivery_term: "2-4 дня",          // Фиксированный срок
+                        show_select_button: true,           // Кнопка выбора ВНУТРИ виджета
                         filter: {
-                            type: ["pickup_point", "terminal"],  // ПВЗ и постаматы
-                            is_yandex_branded: false,  // Любые ПВЗ
-                            payment_methods: ["already_paid"],  // Только предоплата
+                            type: ["pickup_point", "terminal"],
+                            is_yandex_branded: false,
+                            payment_methods: ["already_paid", "card_on_receipt"],
                             payment_methods_filter: "or"
                         }
                     }
                 });
                 
-                // Слушаем выбор ПВЗ
+                // Слушаем выбор ПВЗ (с кнопкой внутри виджета)
                 document.addEventListener('YaNddWidgetPointSelected', function(event) {
                     handlePVZSelection(event.detail);
                 });
                 
-                console.log('✅ Яндекс карта загружена');
+                console.log('✅ Яндекс карта загружена для города:', city);
                 
             } catch (error) {
                 console.error('❌ Ошибка Яндекс карты:', error);
@@ -214,29 +250,25 @@
             // Сохраняем выбранный ПВЗ
             selectedPVZ = {
                 id: pvz.id,
-                name: pvz.name,
+                name: pvz.name || 'Пункт выдачи',
                 address: pvz.address.full_address,
+                country: pvz.address.country,
+                city: pvz.address.locality,
+                street: pvz.address.street,
+                house: pvz.address.house,
+                comment: pvz.address.comment || '',
                 working_hours: pvz.working_hours || 'Не указано',
                 phone: pvz.phone || 'Не указан'
             };
             
             console.log('📍 Выбран ПВЗ:', selectedPVZ);
             
-            // Показываем кнопку подтверждения
-            const btn = document.getElementById('telegramBtn');
-            btn.style.display = 'block';
-            btn.textContent = `✅ Выбрать: ${selectedPVZ.name.substring(0, 20)}...`;
+            // Скрываем подсказку
+            document.getElementById('hint').style.display = 'none';
             
-            // Прокручиваем к кнопке
-            btn.scrollIntoView({ behavior: 'smooth', block: 'end' });
-        }
-        
-        // Обработчик кнопки Telegram
-        document.getElementById('telegramBtn').addEventListener('click', function() {
-            if (!selectedPVZ) return;
-            
+            // Сразу отправляем данные в Telegram
             sendDataToTelegram(selectedPVZ);
-        });
+        }
         
         function sendDataToTelegram(pvzData) {
             // Формируем данные для отправки
@@ -245,6 +277,10 @@
                 pvz_id: pvzData.id,
                 pvz_name: pvzData.name,
                 pvz_address: pvzData.address,
+                pvz_city: pvzData.city,
+                pvz_street: pvzData.street,
+                pvz_house: pvzData.house,
+                pvz_comment: pvzData.comment,
                 pvz_working_hours: pvzData.working_hours,
                 pvz_phone: pvzData.phone,
                 selected_at: new Date().toISOString()
@@ -256,20 +292,69 @@
                 // Отправляем данные в Telegram
                 Telegram.WebApp.sendData(JSON.stringify(data));
                 
-                // Закрываем Web App
+                // Показываем подтверждение
+                setTimeout(() => {
+                    Telegram.WebApp.showAlert('✅ Пункт выдачи выбран!');
+                }, 100);
+                
+                // Закрываем Web App через секунду
                 setTimeout(() => {
                     Telegram.WebApp.close();
-                }, 500);
+                }, 1000);
                 
             } else {
                 // Для тестирования в браузере
-                alert('Выбран ПВЗ:\n' + JSON.stringify(data, null, 2));
+                alert('✅ Пункт выдачи выбран!\n\n' + JSON.stringify(data, null, 2));
+            }
+        }
+        
+        // Инициализация поиска города
+        function initCitySearch() {
+            const cityInput = document.getElementById('cityInput');
+            const cityBtn = document.getElementById('cityBtn');
+            
+            cityBtn.addEventListener('click', function() {
+                changeCity(cityInput.value);
+            });
+            
+            cityInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    changeCity(cityInput.value);
+                }
+            });
+        }
+        
+        function changeCity(city) {
+            if (!city || city.trim() === '') {
+                city = 'Москва';
+                document.getElementById('cityInput').value = city;
+            }
+            
+            console.log('🔄 Смена города на:', city);
+            
+            // Показываем загрузку
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('yandex-map').style.display = 'none';
+            
+            // Если виджет уже существует, обновляем его
+            if (yandexWidget && typeof yandexWidget.update === 'function') {
+                yandexWidget.update({ city: city });
+                
+                setTimeout(() => {
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('yandex-map').style.display = 'block';
+                }, 500);
+                
+            } else {
+                // Иначе перезагружаем страницу с новым городом
+                location.reload();
             }
         }
         
         function showError() {
             document.getElementById('loading').style.display = 'none';
             document.getElementById('yandex-map').style.display = 'none';
+            document.getElementById('citySearch').style.display = 'none';
             document.getElementById('error').style.display = 'block';
         }
         
@@ -287,6 +372,8 @@
             tg.BackButton.onClick(function() {
                 tg.close();
             });
+            
+            console.log('✅ Telegram Web App инициализирован');
         }
         
         // Предотвращаем масштабирование на iOS
