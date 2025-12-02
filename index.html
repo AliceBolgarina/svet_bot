@@ -25,52 +25,33 @@
         
         .header {
             background: white;
-            padding: 16px;
+            padding: 12px 16px;
             text-align: center;
             border-bottom: 1px solid #e0e0e0;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1000;
         }
         
         .header h1 {
             font-size: 18px;
             color: #333;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
         
         .header p {
-            font-size: 14px;
+            font-size: 13px;
             color: #666;
         }
         
-        /* КОНТЕЙНЕР КАРТЫ - делаем узким для мобильного режима */
         .map-container {
-            position: fixed;
-            top: 80px;
+            position: absolute;
+            top: 70px;
             left: 0;
             right: 0;
             bottom: 0;
-            /* Принудительно сужаем для мобильного режима */
-            max-width: 400px;
-            margin: 0 auto;
         }
         
         #widget-container {
             width: 100%;
             height: 100%;
-        }
-        
-        /* Скрываем сайдбар Яндекса */
-        .yandex-delivery-widget .sidebar {
-            display: none !important;
-        }
-        
-        /* Принудительно скрываем список ПВЗ */
-        [class*="point-list"], [class*="list-container"] {
-            display: none !important;
         }
         
         .loading {
@@ -80,23 +61,6 @@
             transform: translate(-50%, -50%);
             font-size: 16px;
             color: #666;
-        }
-        
-        /* Инструкция */
-        .instruction {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            right: 20px;
-            background: white;
-            padding: 12px;
-            border-radius: 10px;
-            text-align: center;
-            font-size: 14px;
-            color: #333;
-            border: 2px solid #667eea;
-            z-index: 100;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
     </style>
 </head>
@@ -109,31 +73,31 @@
     <div class="map-container">
         <div id="widget-container"></div>
         <div class="loading" id="loading">Загрузка карты...</div>
-        <div class="instruction" id="instruction">
-            👆 Нажмите на метку ПВЗ на карте, затем кнопку "Выбрать этот пункт"
-        </div>
     </div>
 
     <script>
-        // Telegram Web App
-        function initTelegram() {
-            if (window.Telegram && Telegram.WebApp) {
-                Telegram.WebApp.expand();
-                Telegram.WebApp.ready();
-                console.log('✅ Telegram Web App готов');
-            }
+        // Проверка Telegram Web App
+        const isTelegram = !!(window.Telegram && Telegram.WebApp);
+        
+        // Инициализация Telegram
+        if (isTelegram) {
+            Telegram.WebApp.expand();
+            Telegram.WebApp.setHeaderColor('#ffffff');
+            Telegram.WebApp.setBackgroundColor('#ffffff');
+            Telegram.WebApp.ready();
+            console.log('✅ Telegram Web App готов');
         }
         
         // Создание Яндекс виджета
         function createYandexWidget() {
-            console.log('🛠️ Создание виджета...');
+            console.log('Создание виджета...');
             
             try {
-                // Тестовый station_id для Москвы
+                // Тестовый station_id
                 const testStationId = "05e809bb-4521-42d9-a936-0fb0744c0fb3";
                 
-                // Конфигурация для мобильного режима
-                window.yandexWidget = YaDelivery.createWidget({
+                // Создаем виджет
+                YaDelivery.createWidget({
                     containerId: 'widget-container',
                     params: {
                         city: "Москва",
@@ -145,113 +109,77 @@
                         show_select_button: true,
                         filter: {
                             type: ["pickup_point"],
-                            is_yandex_branded: false,
-                            payment_methods: ["already_paid", "card_on_receipt"]
-                        },
-                        // Параметр для мобильного вида (если поддерживается)
-                        view: "mobile"
+                            is_yandex_branded: false
+                        }
                     }
                 });
                 
                 console.log('✅ Виджет создан');
                 
-                // Обработчик выбора ПВЗ
+                // Событие выбора ПВЗ
                 document.addEventListener('YaNddWidgetPointSelected', function(event) {
-                    console.log('📍 Выбор ПВЗ:', event.detail);
+                    console.log('Получены данные ПВЗ:', event.detail);
                     
                     if (!event.detail) return;
                     
                     const pvz = event.detail;
                     
-                    // Только основные данные
+                    // Формируем данные
                     const data = {
                         action: 'pvz_selected',
-                        pvz_id: pvz.id,
+                        pvz_id: pvz.id || '',
                         pvz_name: pvz.name || 'Пункт выдачи',
-                        pvz_address: pvz.address?.full_address || pvz.address || '',
+                        pvz_address: pvz.address?.full_address || '',
                         pvz_working_hours: pvz.working_hours || '',
-                        pvz_phone: pvz.phone || ''
+                        pvz_phone: pvz.phone || '',
+                        timestamp: Date.now()
                     };
                     
-                    console.log('📤 Отправка данных:', data);
+                    console.log('Данные для отправки:', data);
                     
                     // Отправка в Telegram
-                    if (window.Telegram && Telegram.WebApp) {
-                        Telegram.WebApp.sendData(JSON.stringify(data));
-                        // Скрываем инструкцию
-                        document.getElementById('instruction').style.display = 'none';
-                        // Закрываем
-                        setTimeout(() => {
-                            try {
+                    if (isTelegram) {
+                        try {
+                            // 1. Отправляем данные
+                            Telegram.WebApp.sendData(JSON.stringify(data));
+                            console.log('✅ Данные отправлены в Telegram');
+                            
+                            // 2. НЕ показываем никаких сообщений!
+                            // 3. Сразу закрываем Web App
+                            setTimeout(function() {
                                 Telegram.WebApp.close();
-                            } catch (e) {
-                                // Игнорируем
-                            }
-                        }, 200);
+                            }, 100);
+                            
+                        } catch (error) {
+                            console.error('Ошибка отправки:', error);
+                        }
                     } else {
-                        // Тестовый режим
-                        console.log('Тест: данные готовы', data);
-                        document.getElementById('instruction').textContent = '✅ Пункт выбран! В Telegram данные отправятся автоматически.';
+                        // Только для теста в браузере
+                        console.log('Тестовые данные:', data);
+                        // Никаких алертов!
                     }
                 });
                 
-                // Принудительно скрываем сайдбар после загрузки
-                setTimeout(() => {
+                // Скрываем загрузку
+                setTimeout(function() {
                     document.getElementById('loading').style.display = 'none';
-                    hideYandexSidebar();
-                }, 1500);
-                
-                // Периодически скрываем сайдбар
-                setInterval(hideYandexSidebar, 1000);
+                }, 1000);
                 
             } catch (error) {
-                console.error('❌ Ошибка создания виджета:', error);
-                document.getElementById('loading').textContent = 'Ошибка загрузки карты';
-            }
-        }
-        
-        // Функция для скрытия сайдбара Яндекса
-        function hideYandexSidebar() {
-            const widget = document.querySelector('#widget-container .yandex-delivery-widget');
-            if (widget) {
-                // Ищем и скрываем элементы списка ПВЗ
-                const sidebars = widget.querySelectorAll('.sidebar, [class*="list"], [class*="points"]');
-                sidebars.forEach(el => {
-                    if (el.offsetWidth > 100) { // Если это сайдбар (широкий элемент)
-                        el.style.display = 'none';
-                    }
-                });
-                
-                // Скрываем кнопки переключения вида
-                const toggleButtons = widget.querySelectorAll('[class*="toggle"], [class*="view"]');
-                toggleButtons.forEach(btn => {
-                    btn.style.display = 'none';
-                });
+                console.error('Ошибка:', error);
+                document.getElementById('loading').textContent = 'Ошибка загрузки';
             }
         }
         
         // Инициализация
-        function init() {
-            console.log('🚀 Инициализация...');
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Запуск Web App');
             
-            // Telegram
-            initTelegram();
-            
-            // Яндекс виджет
             if (typeof YaDelivery !== 'undefined') {
                 createYandexWidget();
             } else {
-                // Ждем загрузки библиотеки
                 document.addEventListener('YaNddWidgetLoad', createYandexWidget);
             }
-        }
-        
-        // Запуск при загрузке
-        document.addEventListener('DOMContentLoaded', init);
-        
-        // При изменении размера окна
-        window.addEventListener('resize', function() {
-            hideYandexSidebar();
         });
     </script>
 </body>
