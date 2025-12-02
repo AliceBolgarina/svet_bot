@@ -4,51 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Выбор пункта выдачи</title>
-    <script src="https://ndd-widget.landpro.site/widget.js"></script>
+    
+    <!-- Яндекс виджет -->
+    <script src="https://widget-kit.yandex.ru/v1/widget.js"></script>
     
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background: white; height: 100vh; overflow: hidden; }
+        body { height: 100vh; overflow: hidden; font-family: Arial, sans-serif; }
+        
+        #widget-container {
+            width: 100%;
+            height: 100vh;
+        }
         
         .header {
-            background: white;
-            padding: 16px;
-            border-bottom: 1px solid #e0e0e0;
-            text-align: center;
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
+            background: white;
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
             z-index: 1000;
-        }
-        
-        .header h1 {
-            font-size: 18px;
-            color: #333;
-            margin-bottom: 4px;
-        }
-        
-        .map-container {
-            position: fixed;
-            top: 80px;
-            left: 0;
-            right: 0;
-            bottom: 0;
-        }
-        
-        #widget-container {
-            width: 100%;
-            height: 100%;
-        }
-        
-        /* Скрываем ВСЕ элементы Яндекса кроме карты */
-        .yandex-delivery-widget > div:not([class*="map"]) {
-            display: none !important;
-        }
-        
-        /* Скрываем поиск, сайдбар и т.д. */
-        .search-bar, .sidebar, .search-panel, [class*="search"], [class*="Search"] {
-            display: none !important;
         }
         
         .loading {
@@ -56,48 +34,33 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 16px;
-            color: #666;
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>Выберите пункт выдачи</h1>
-        <p>Нажмите на пункт на карте</p>
+        <h3>Выберите пункт выдачи</h3>
+        <p>Нажмите на метку на карте</p>
     </div>
     
-    <div class="map-container">
-        <div id="widget-container"></div>
-        <div class="loading" id="loading">Загрузка карты...</div>
-    </div>
+    <div id="widget-container"></div>
+    <div class="loading" id="loading">Загрузка...</div>
 
     <script>
-        // Минимальный код - только самое необходимое
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Запуск карты...');
-            
-            // Настройка для Telegram
-            if (window.Telegram && Telegram.WebApp) {
-                Telegram.WebApp.expand();
-                Telegram.WebApp.BackButton.show();
-                Telegram.WebApp.BackButton.onClick(() => {
-                    Telegram.WebApp.close();
-                });
-            }
-            
-            // Загрузка Яндекс виджета
-            if (window.YaDelivery) {
-                initMap();
-            } else {
-                document.addEventListener('YaNddWidgetLoad', initMap);
-            }
-        });
+        console.log('🚀 Запуск...');
         
-        function initMap() {
+        // Telegram Web App
+        if (window.Telegram && Telegram.WebApp) {
+            Telegram.WebApp.expand();
+            Telegram.WebApp.ready();
+        }
+        
+        // Создаем виджет
+        function createWidget() {
+            console.log('Создание виджета...');
+            
             try {
-                // ОЧЕНЬ ПРОСТАЯ конфигурация
-                YaDelivery.createWidget({
+                const widget = YaDelivery.createWidget({
                     containerId: 'widget-container',
                     params: {
                         city: "Москва",
@@ -107,42 +70,48 @@
                     }
                 });
                 
-                // Обработчик выбора ПВЗ
-                document.addEventListener('YaNddWidgetPointSelected', function(event) {
-                    if (!event.detail) return;
+                console.log('✅ Виджет создан');
+                
+                // Событие выбора ПВЗ
+                document.addEventListener('YaNddWidgetPointSelected', function(e) {
+                    console.log('Выбран ПВЗ:', e.detail);
                     
-                    const pvz = event.detail;
+                    const pvz = e.detail;
                     const data = {
                         action: 'pvz_selected',
-                        pvz_id: pvz.id || '',
-                        pvz_name: pvz.name || 'Пункт выдачи',
-                        pvz_address: pvz.address?.full_address || '',
-                        pvz_working_hours: pvz.working_hours || '',
-                        pvz_phone: pvz.phone || ''
+                        pvz_id: pvz.id,
+                        pvz_name: pvz.name,
+                        pvz_address: pvz.address.full_address
                     };
                     
-                    console.log('Отправка данных:', data);
+                    console.log('Отправка:', data);
                     
-                    // Отправляем в Telegram
                     if (window.Telegram && Telegram.WebApp) {
                         Telegram.WebApp.sendData(JSON.stringify(data));
-                        // ЗАКРЫВАЕМ БЕЗ АЛЕРТОВ
-                        setTimeout(() => Telegram.WebApp.close(), 100);
-                    } else {
-                        // Для теста
-                        console.log('Тестовые данные:', data);
-                        // Никаких алертов!
+                        setTimeout(() => Telegram.WebApp.close(), 200);
                     }
                 });
                 
-                // Скрываем загрузку
-                setTimeout(() => {
-                    document.getElementById('loading').style.display = 'none';
-                }, 1000);
+                document.getElementById('loading').style.display = 'none';
                 
             } catch (error) {
-                console.error('Ошибка:', error);
+                console.error('❌ Ошибка:', error);
+                document.getElementById('loading').textContent = 'Ошибка загрузки карты';
             }
+        }
+        
+        // Запускаем
+        if (window.YaDelivery) {
+            createWidget();
+        } else {
+            document.addEventListener('YaNddWidgetLoad', createWidget);
+            
+            // Таймаут
+            setTimeout(() => {
+                if (document.getElementById('loading').style.display !== 'none') {
+                    document.getElementById('loading').textContent = 'Не удалось загрузить карту. Обновите страницу.';
+                }
+            }, 10000);
         }
     </script>
 </body>
